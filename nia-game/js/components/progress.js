@@ -8,4 +8,8 @@ const dotClass = (index) =>
     .join(" ");
 
 export const buildProgress = () =>
-  el("div", { class: "progress" }, GAME.chapters.map((_, i) => el("i", { class: dotClass(i) })));
+  el(
+    "div",
+    { class: "progress" },
+    GAME.chapters.map((_, i) => el("i", { class: dotClass(i) })),
+  );

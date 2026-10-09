@@ -15,7 +15,10 @@ const buildSlot = (sticker) => {
       "data-sticker": sticker.id,
       title: filled ? sticker.name : "?",
     },
-    el("img", { src: filled ? sticker.img : sticker.sil, alt: filled ? sticker.name : "" })
+    el("img", {
+      src: filled ? sticker.img : sticker.sil,
+      alt: filled ? sticker.name : "",
+    }),
   );
 };
 
@@ -24,7 +27,7 @@ export const buildAlbum = () =>
     "div",
     { class: "album" },
     el("h2", { text: UI.album }),
-    el("div", { class: "album-grid" }, GAME.stickers.map(buildSlot))
+    el("div", { class: "album-grid" }, GAME.stickers.map(buildSlot)),
   );
 
 const fillSlot = (slot, sticker) => {

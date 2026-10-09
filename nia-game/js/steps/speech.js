@@ -5,7 +5,6 @@ import { advanceStep } from "../core/actions.js";
 const createSpeechStep =
   (pickText) =>
   ({ chapter, body }) => {
-    body.className = "body body--right";
     body.appendChild(buildBubble(GAME.intro.name, pickText(chapter)));
     return { ready: true, onNext: advanceStep };
   };

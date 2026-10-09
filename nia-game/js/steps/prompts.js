@@ -8,7 +8,6 @@ const buildTag = () =>
 const buildPromptCard = ({ tone, text }) => el("div", { class: `card ${tone}`, text });
 
 export const promptsStep = ({ chapter, body }) => {
-  body.className = "body";
   body.append(buildTag(), ...chapter.prompts.map(buildPromptCard));
   return { ready: true, onNext: finishChapter };
 };

@@ -5,11 +5,18 @@ import { sfx } from "../audio/sfx.js";
 import { paperPlane } from "../dom/effects.js";
 import { delay } from "../core/utils.js";
 import { advanceStep } from "../core/actions.js";
-import { state, getReportField, setReportField, markReportSent } from "../core/state.js";
+import {
+  state,
+  getReportField,
+  setReportField,
+  markReportSent,
+} from "../core/state.js";
 
 /* ---------- validation ---------- */
 const isFilled = (fields) =>
-  fields.every((field) => getReportField(field.id).trim().length >= MIN_FIELD_LENGTH);
+  fields.every(
+    (field) => getReportField(field.id).trim().length >= MIN_FIELD_LENGTH,
+  );
 
 const refreshSubmit = (form) => {
   form.submit.disabled = !isFilled(form.config.fields) || state.reportSent;
@@ -23,14 +30,18 @@ const buildRecapLine = ([id, label], index) => [
 ];
 
 const buildRecap = () =>
-  el("div", { class: "recap" }, Object.entries(UI.recap).flatMap(buildRecapLine));
+  el(
+    "div",
+    { class: "recap" },
+    Object.entries(UI.recap).flatMap(buildRecapLine),
+  );
 
+/* Replaces the whole form with the "sent" message and the summary of the answers. */
 const showSent = (form) => {
-  Object.values(form.areas).forEach((area) => {
-    area.disabled = true;
-  });
-  form.submit.style.display = "none";
-  form.out.replaceChildren(el("div", { class: "sent", text: form.config.done }), buildRecap());
+  form.root.replaceChildren(
+    el("div", { class: "sent", text: form.config.done }),
+    buildRecap(),
+  );
 };
 
 /* ---------- submit ---------- */
@@ -66,16 +77,23 @@ const buildFieldRow = (field, textarea) =>
     "div",
     { class: "field" },
     el("label", { for: `f_${field.id}`, text: field.label }),
-    textarea
+    textarea,
   );
 
 const buildSubmitButton = (label, onClick) =>
-  el("button", { class: "btn btn--go", type: "button", disabled: "", onclick: onClick }, label);
+  el(
+    "button",
+    { class: "btn btn--go", type: "button", disabled: "", onclick: onClick },
+    label,
+  );
 
 const createForm = (config, onDone) => {
-  const form = { config, onDone, out: el("div") };
+  const form = { config, onDone };
   form.areas = Object.fromEntries(
-    config.fields.map((field) => [field.id, buildTextarea(field, () => refreshSubmit(form))])
+    config.fields.map((field) => [
+      field.id,
+      buildTextarea(field, () => refreshSubmit(form)),
+    ]),
   );
   form.submit = buildSubmitButton(config.submit, () => submitReport(form));
   form.root = el(
@@ -84,14 +102,12 @@ const createForm = (config, onDone) => {
     el("p", { class: "lead", text: config.intro }),
     config.fields.map((field) => buildFieldRow(field, form.areas[field.id])),
     form.submit,
-    form.out
   );
   refreshSubmit(form);
   return form;
 };
 
 export const reportStep = ({ chapter, body, enableNext }) => {
-  body.className = "body";
   const form = createForm(chapter.report, enableNext);
   body.appendChild(form.root);
   if (state.reportSent) showSent(form);

@@ -25,11 +25,17 @@ const STEP_RENDERERS = {
   [STEPS.PROMPTS]: promptsStep,
 };
 
+const bodyClass = (chapter, stepName) =>
+  ["body", chapter.bodyClass?.[stepName]].filter(Boolean).join(" ");
+
 export const renderChapter = () => {
   const chapter = getChapter();
   const stepName = getStepName();
-  const scene = buildScene(chapter.bg, { hunting: stepName === STEPS.HUNT });
-  const body = el("div", { class: "body" });
+  const scene = buildScene(chapter.bg, {
+    hunting: stepName === STEPS.HUNT,
+    className: `chapter-${chapter.id} step-${stepName}`,
+  });
+  const body = el("div", { class: bodyClass(chapter, stepName) });
 
   let onNext = advanceStep;
   const nextButton = buildNextButton(false, () => {
@@ -47,7 +53,7 @@ export const renderChapter = () => {
     el(
       "div",
       { class: "scene-inner" },
-      buildAlbum(),
+      chapter.showAlbum[stepName] && buildAlbum(),
       el("h1", { class: "chapter-title", text: chapter.title }),
       body,
       buildFooter(result.footerLeft, nextButton)

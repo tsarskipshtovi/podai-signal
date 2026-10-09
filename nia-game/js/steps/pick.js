@@ -1,5 +1,6 @@
 import { el } from "../dom/el.js";
 import { UI } from "../data.js";
+import { MOBILE_QUERY } from "../config.js";
 import { sfx } from "../audio/sfx.js";
 import { hasSticker } from "../core/state.js";
 import { findCorrectInstitution } from "../core/lookup.js";
@@ -8,7 +9,10 @@ import { collectSticker } from "../components/album.js";
 import { showTryAgain } from "../dom/tryAgain.js";
 
 const clearHost = (host) => host.replaceChildren();
-const doorsOf = (picker) => [...picker.doors.children];
+const doorsOf = (picker) => [...picker.doors.querySelectorAll(".door")];
+const doorById = (picker, id) =>
+  doorsOf(picker).find((door) => door.dataset.id === id);
+const isMobile = () => matchMedia(MOBILE_QUERY).matches;
 
 /* ---------- door states ---------- */
 const markPicked = (picker, id) =>
@@ -27,25 +31,35 @@ const lockDoors = (picker, correctId) =>
     door.classList.toggle("picked", isCorrect);
     door.classList.toggle("dim", !isCorrect);
     door.disabled = true;
+    door.style.display = isCorrect ? "" : "none";
   });
 
 /* ---------- verdict ---------- */
-const showVerdict = (picker, kind, text) => {
+/* Mobile: the message opens right under its door. Larger screens: under the detail host. */
+const placeVerdict = (picker, door) => {
+  if (isMobile()) door.after(picker.verdict);
+  else picker.detail.after(picker.verdict);
+};
+
+const showVerdict = (picker, kind, text, door) => {
+  placeVerdict(picker, door);
   clearHost(picker.verdict);
   picker.verdict.appendChild(el("div", { class: `verdict ${kind}`, text }));
+  picker.verdict.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
 const lockToCorrect = (picker) => {
   const correct = findCorrectInstitution(picker.chapter);
   clearHost(picker.detail);
   lockDoors(picker, correct.id);
-  showVerdict(picker, "ok", correct.right);
+  showVerdict(picker, "ok", correct.right, doorById(picker, correct.id));
 };
 
 /* ---------- choosing ---------- */
 const solve = (picker) => {
   sfx.correct();
-  const pickedRect = picker.doors.querySelector(".picked")?.getBoundingClientRect() ?? null;
+  const pickedRect =
+    picker.doors.querySelector(".picked")?.getBoundingClientRect() ?? null;
   picker.solved = true;
   lockToCorrect(picker);
   collectSticker(picker.chapter.sticker, pickedRect);
@@ -55,7 +69,12 @@ const solve = (picker) => {
 const rejectChoice = (picker, institution) => {
   sfx.wrong();
   showTryAgain(() => {
-    showVerdict(picker, "no", institution.wrong);
+    showVerdict(
+      picker,
+      "no",
+      institution.wrong,
+      doorById(picker, institution.id),
+    );
     clearHost(picker.detail);
     clearPicked(picker);
   });
@@ -75,12 +94,20 @@ const goBack = (picker) => {
 const buildChooseButton = (picker, institution) =>
   el(
     "button",
-    { class: "btn btn--go", type: "button", onclick: () => chooseDoor(picker, institution) },
-    UI.chooseDoor
+    {
+      class: "btn btn--go",
+      type: "button",
+      onclick: () => chooseDoor(picker, institution),
+    },
+    UI.chooseDoor,
   );
 
 const buildBackButton = (picker) =>
-  el("button", { class: "btn btn--ghost", type: "button", onclick: () => goBack(picker) }, UI.back);
+  el(
+    "button",
+    { class: "btn btn--ghost", type: "button", onclick: () => goBack(picker) },
+    UI.back,
+  );
 
 const buildDetailPanel = (picker, institution) =>
   el(
@@ -89,22 +116,34 @@ const buildDetailPanel = (picker, institution) =>
     el("h3", { text: institution.name }),
     institution.full && el("p", { class: "full", text: institution.full }),
     el("p", { text: institution.desc }),
-    el("div", { class: "row" }, buildChooseButton(picker, institution), buildBackButton(picker))
+    el(
+      "div",
+      { class: "row" },
+      buildChooseButton(picker, institution),
+      buildBackButton(picker),
+    ),
   );
 
-const showDetail = (picker, institution) => {
+/* Mobile: the detail opens right under the picked door. Larger screens: under all doors. */
+const placeDetail = (picker, door) => {
+  if (isMobile()) door.after(picker.detail);
+  else picker.doors.after(picker.detail);
+};
+
+const showDetail = (picker, institution, door) => {
   clearHost(picker.verdict);
   clearHost(picker.detail);
+  placeDetail(picker, door);
   const panel = buildDetailPanel(picker, institution);
   picker.detail.appendChild(panel);
   panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
-const selectDoor = (picker, institution) => {
+const selectDoor = (picker, institution, door) => {
   if (picker.solved) return;
   sfx.click();
   markPicked(picker, institution.id);
-  showDetail(picker, institution);
+  showDetail(picker, institution, door);
 };
 
 /* ---------- build ---------- */
@@ -115,11 +154,11 @@ const buildDoor = (picker, institution) =>
       class: "door",
       type: "button",
       "data-id": institution.id,
-      onclick: () => selectDoor(picker, institution),
+      onclick: (event) => selectDoor(picker, institution, event.currentTarget),
     },
     el("img", { src: institution.img, alt: "" }),
     el("b", { text: institution.name }),
-    institution.full && el("small", { text: institution.full })
+    institution.full && el("small", { text: institution.full }),
   );
 
 const createPicker = (chapter, enableNext) => ({
@@ -127,19 +166,20 @@ const createPicker = (chapter, enableNext) => ({
   enableNext,
   solved: hasSticker(chapter.sticker),
   doors: el("div", { class: "doors" }),
-  detail: el("div"),
-  verdict: el("div"),
+  detail: el("div", { class: "detail-host" }),
+  verdict: el("div", { class: "verdict-host" }),
 });
 
 export const pickStep = ({ chapter, body, enableNext }) => {
   const picker = createPicker(chapter, enableNext);
-  chapter.institutions.forEach((inst) => picker.doors.appendChild(buildDoor(picker, inst)));
-  body.className = "body";
+  chapter.institutions.forEach((inst) =>
+    picker.doors.appendChild(buildDoor(picker, inst)),
+  );
   body.append(
     el("div", { class: "card green", text: chapter.caption }),
     picker.doors,
     picker.detail,
-    picker.verdict
+    picker.verdict,
   );
   if (picker.solved) lockToCorrect(picker);
   return { ready: picker.solved, onNext: advanceStep };

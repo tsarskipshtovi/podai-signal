@@ -34,6 +34,9 @@ export const CONFETTI = Object.freeze({
   colors: ["#0ba999", "#9f91d3", "#cef6a3", "#498cb9", "#ffbfba", "#2d3d6e"],
 });
 
+/* Same width as the mobile rules in styles.css */
+export const MOBILE_QUERY = "(max-width: 600px)";
+
 export const STICKER_FLY_HALF_SIZE = 45;
 export const MIN_FIELD_LENGTH = 2;
 

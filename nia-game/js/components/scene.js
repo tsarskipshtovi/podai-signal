@@ -1,8 +1,11 @@
 import { el } from "../dom/el.js";
 
-export const buildScene = (bgSrc, { hunting = false } = {}, ...children) =>
+const sceneClass = (hunting, className) =>
+  ["scene", hunting && "hunting", className].filter(Boolean).join(" ");
+
+export const buildScene = (bgSrc, { hunting = false, className = "" } = {}, ...children) =>
   el(
     "div",
-    { class: hunting ? "scene hunting" : "scene", style: `background-image:url('${bgSrc}')` },
+    { class: sceneClass(hunting, className), style: `background-image:url('${bgSrc}')` },
     ...children
   );

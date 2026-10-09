@@ -34,10 +34,15 @@ const celebrate = () => {
 
 export const renderFinal = () => {
   const hero = buildHero(
+    "hero--final",
     el("h1", { text: UI.finalTitle }),
     buildStickerRow(),
     el("p", { text: `${GAME.final.text}\n\n${GAME.final.sub}` }),
-    el("div", { class: "cta-row" }, buildCta({ label: GAME.final.again, onClick: handlePlayAgain }))
+    el(
+      "div",
+      { class: "cta-row" },
+      buildCta({ label: GAME.final.again, onClick: handlePlayAgain }),
+    ),
   );
   mount(buildScene(GAME.final.bg, {}, hero));
   celebrate();

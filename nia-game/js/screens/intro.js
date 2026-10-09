@@ -18,18 +18,18 @@ const handleNext = () => {
 const buildBody = () =>
   el(
     "div",
-    { class: "body body--right body--center" },
-    buildBubble(GAME.intro.name, GAME.intro.speech)
+    { class: `body ${GAME.intro.bodyClass}` },
+    buildBubble(GAME.intro.name, GAME.intro.speech),
   );
 
 export const renderIntro = () => {
   const inner = el(
     "div",
     { class: "scene-inner" },
-    buildAlbum(),
+    // buildAlbum(),
     el("h1", { class: "chapter-title", text: GAME.subtitle }),
     buildBody(),
-    buildFooter(buildHintPill(UI.introHint), buildNextButton(true, handleNext))
+    buildFooter(buildHintPill(UI.introHint), buildNextButton(true, handleNext)),
   );
   mount(buildScene(GAME.intro.bg, {}, inner), buildRestartButton());
 };
